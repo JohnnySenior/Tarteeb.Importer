@@ -3,6 +3,7 @@
 // Powering True Leadership
 //===========================
 
+using System.Linq;
 using System.Threading.Tasks;
 using EFxceptions;
 using Microsoft.EntityFrameworkCore;
@@ -25,9 +26,13 @@ namespace Tarteeb.Importer.Brokers.Storages
             return client;
         }
 
+        public IQueryable<Client> SelectAllClientAsync() =>
+            this.Clients.AsQueryable();
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string connectionString = "Data Source=..\\..\\..\\Tarteeb.DB";
+            optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             optionsBuilder.UseSqlite(connectionString);
         }
     }
