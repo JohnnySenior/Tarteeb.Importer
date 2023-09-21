@@ -396,3 +396,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/Tarteeb.Importer/Tarteeb.DB
+/Tarteeb.Importer/Tarteeb.DB-shm
