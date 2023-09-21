@@ -22,7 +22,6 @@ namespace Tarteeb.Importer.Brokers.Storages
         public async Task<Client> SelectByIdAsync(Guid clientId) =>
             await this.Clients.FindAsync(clientId);
 
-
         public async Task<Client> InsertClientAsync(Client client)
         {
             await this.Clients.AddAsync(client);
