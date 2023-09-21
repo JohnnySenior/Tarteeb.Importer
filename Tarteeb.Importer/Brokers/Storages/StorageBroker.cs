@@ -3,6 +3,7 @@
 // Powering True Leadership
 //===========================
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using EFxceptions;
@@ -17,6 +18,10 @@ namespace Tarteeb.Importer.Brokers.Storages
 
         public StorageBroker() =>
             this.Database.EnsureCreated();
+
+        public async Task<Client> SelectByIdAsync(Guid clientId) =>
+            await this.Clients.FindAsync(clientId);
+
 
         public async Task<Client> InsertClientAsync(Client client)
         {
