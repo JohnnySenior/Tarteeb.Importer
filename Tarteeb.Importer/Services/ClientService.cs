@@ -8,75 +8,32 @@ using System.Data;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Tarteeb.Importer.Brokers.DateTimes;
 using Tarteeb.Importer.Brokers.Storages;
 using Tarteeb.Importer.Models.Clients;
 using Tarteeb.Importer.Models.Exceptions;
 
 namespace Tarteeb.Importer.Services
 {
-    internal class ClientService
+    internal partial class ClientService
     {
         private readonly StorageBroker storageBroker;
+        private readonly DateTimeBroker dateTimeBroker;
 
-        public ClientService() =>
-            this.storageBroker = new StorageBroker();
-
-        /// <exception cref="ClientNullException"></exception>
-        /// <exception cref="InvalidCastException"></exception>
-
-        internal Task<Client> AddClientAsync(Client client)
+        public ClientService(StorageBroker storageBroker, DateTimeBroker dateTimeBroker)
         {
-            if(client is null)
-            {
-                throw new ClientNullException();
-            }
+            this.storageBroker = storageBroker;
+            this.dateTimeBroker = dateTimeBroker;
+        }
 
-            Validate(
-                (Rule: IsInvalid(client.Id), Parameter: nameof(Client.Id)),
-                (Rule: IsInvalid(client.Firstname), Parameter: nameof(Client.Firstname)),
-                (Rule: IsInvalid(client.Lastname), Parameter: nameof(Client.Lastname)),
-                (Rule: IsInvalid(client.Email), Parameter: nameof(Client.Email)),
-                (Rule: IsInvalid(client.GroupId), Parameter: nameof(Client.GroupId)));
+        /// <exception cref="ClientValidationException"></exception>
 
-            Validate(
-                (Rule: IsInvalidEmail(client.Email), Parameter: nameof(Client.Email)));
+        internal Task<Client> AddClientAsync(Client client) =>
+        TryCatch(() =>
+        {
+            ValidateClientOnAdd(client);
 
             return this.storageBroker.InsertClientAsync(client);
-        }
-
-        private dynamic IsInvalid(string text) => new
-        {
-            Condition = string.IsNullOrWhiteSpace(text),
-            Message = "Text is required"
-        };
-
-        private dynamic IsInvalid(Guid id) => new
-        {
-            Condition = id == default,
-            Message = "Id is required"
-        };
-
-        private dynamic IsInvalidEmail(string email) => new
-        {
-            Condition = !Regex.IsMatch(email, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\r\n"),
-            Message = "Email is invalid"
-        };
-
-        private void Validate(params(dynamic Rule, string Parameter)[] validations)
-        {
-            var invalidClientException = new InvalidClientException();
-
-            foreach ((dynamic rule, string parameter) in validations)
-            {
-                if(rule.Condition)
-                {
-                    invalidClientException.UpsertDataList(
-                        key: parameter,
-                        value: rule.Message);
-                }
-            }
-
-            invalidClientException.ThrowIfContainsErrors();
-        }
+        });
     }
 }
