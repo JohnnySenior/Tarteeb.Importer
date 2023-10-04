@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Bogus;
 using EFxceptions.Models.Exceptions;
 using Tarteeb.Importer.Brokers.DateTimes;
 using Tarteeb.Importer.Brokers.Loggings;
@@ -21,46 +22,51 @@ namespace Tarteeb.Importer
     {
         static async Task Main(string[] args)
         {
-            Client client = new Client
-            {
-                //Id = Guid.NewGuid(),
-                Firstname = "Johnny",
-                Lastname = "Senior",
-                PhoneNumber = "01076419505",
-                Email = "jamshidbektursunboev@gmail.com",
-                BirthDate = DateTimeOffset.Parse("21/05/1995"),
-                GroupId = Guid.NewGuid(),
-            };
+            var faceClient = new Faker();
 
-            var loggingBroker = new LoggingBroker();
-            var clientService = new ClientService(new StorageBroker(), new DateTimeBroker());
-
-            try
+            for (int i = 0; i < 2000; i++)
             {
-                var persistedClient = await clientService.AddClientAsync(client);
-            }
-            catch (ClientValidationException clientValidationException)
-            {
-                loggingBroker.LogError(clientValidationException.InnerException.Message);
-
-                foreach (DictionaryEntry entry in clientValidationException.InnerException.Data)
+                Client client = new Client
                 {
-                    string errorSummary = string.Join(",", (List<string>)entry.Value);
+                    Id = faceClient.Random.Guid(),
+                    Firstname = faceClient.Name.FirstName(),
+                    Lastname = faceClient.Name.LastName(),
+                    PhoneNumber = faceClient.Phone.PhoneNumber(),
+                    Email = faceClient.Internet.Email(),
+                    BirthDate = faceClient.Date.Between(new DateTime(1995, 1, 1), new DateTime(2011, 12, 31)),
+                    GroupId = faceClient.Random.Guid(),
+                };
 
-                    loggingBroker.LogError(entry.Key + " => " + errorSummary);
+                var loggingBroker = new LoggingBroker();
+                var clientService = new ClientService(new StorageBroker(), new DateTimeBroker());
+
+                try
+                {
+                    var persistedClient = await clientService.AddClientAsync(client);
                 }
-            }
-            catch(ClientDependencyValidationException clientDependencyValidationException)
-            {
-                loggingBroker.LogError(clientDependencyValidationException.InnerException.Message);
-            }
-            catch(ClientDependencyException clientDependencyException)
-            {
-                loggingBroker.LogError(clientDependencyException.InnerException.Message);
-            }
-            catch(ClientServiceException clientServiceException)
-            {
-                loggingBroker.LogError(clientServiceException.InnerException.Message);
+                catch (ClientValidationException clientValidationException)
+                {
+                    loggingBroker.LogError(clientValidationException.InnerException.Message);
+
+                    foreach (DictionaryEntry entry in clientValidationException.InnerException.Data)
+                    {
+                        string errorSummary = string.Join(",", (List<string>)entry.Value);
+
+                        loggingBroker.LogError(entry.Key + " => " + errorSummary);
+                    }
+                }
+                catch (ClientDependencyValidationException clientDependencyValidationException)
+                {
+                    loggingBroker.LogError(clientDependencyValidationException.InnerException.Message);
+                }
+                catch (ClientDependencyException clientDependencyException)
+                {
+                    loggingBroker.LogError(clientDependencyException.InnerException.Message);
+                }
+                catch (ClientServiceException clientServiceException)
+                {
+                    loggingBroker.LogError(clientServiceException.InnerException.Message);
+                }
             }
         }
     }
